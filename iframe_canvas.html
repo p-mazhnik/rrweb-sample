@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentry Canvas Replay in Iframe</title>
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+        }
+        canvas {
+            border: 1px solid black;
+            width: 100%;
+            height: 80%;
+        }
+        .textContainer {
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="textContainer">
+    <p>[iframe] This is text above the canvas</p>
+</div>
+<canvas id="iframeCanvas"></canvas>
+<div class="textContainer">
+    <p>[iframe] This is text below the canvas</p>
+</div>
+<script>
+  // Canvas inside iframe
+  var iframeCanvas = document.getElementById('iframeCanvas');
+  var iframeCtx = iframeCanvas.getContext('2d');
+
+  iframeCanvas.width = iframeCanvas.offsetWidth;
+  iframeCanvas.height = iframeCanvas.offsetHeight;
+
+  // Animation loop for main canvas
+  function animateIframeCanvas() {
+    iframeCtx.clearRect(0, 0, iframeCanvas.width, iframeCanvas.height);
+    iframeCtx.fillStyle = 'blue';
+    iframeCtx.fillRect(Math.random() * iframeCanvas.width, Math.random() * iframeCanvas.height, 50, 50);
+    setTimeout(animateIframeCanvas, 1000);
+  }
+
+  animateIframeCanvas();
+</script>
+</body>
+</html>
