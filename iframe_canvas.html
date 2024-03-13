@@ -22,30 +22,59 @@
     </style>
 </head>
 <body>
-<div class="textContainer">
-    <p>[iframe] This is text above the canvas</p>
+<div style="height: 50%">
+    <div class="textContainer">
+        <p>[iframe] This is text above the canvas</p>
+    </div>
+    <canvas id="iframeCanvas"></canvas>
+    <div class="textContainer">
+        <p>[iframe] This is text below the canvas and above the shadow dom</p>
+    </div>
 </div>
-<canvas id="iframeCanvas"></canvas>
-<div class="textContainer">
-    <p>[iframe] This is text below the canvas</p>
+<div style="height: 50%" id="shadow-root"></div>
 </div>
 <script>
   // Canvas inside iframe
   var iframeCanvas = document.getElementById('iframeCanvas');
-  var iframeCtx = iframeCanvas.getContext('2d');
 
-  iframeCanvas.width = iframeCanvas.offsetWidth;
-  iframeCanvas.height = iframeCanvas.offsetHeight;
+  const scale = 6;
+
+  iframeCanvas.width = scale * iframeCanvas.offsetWidth;
+  iframeCanvas.height = scale * iframeCanvas.offsetHeight;
 
   // Animation loop for main canvas
   function animateIframeCanvas() {
+    const iframeCtx = iframeCanvas.getContext('2d');
     iframeCtx.clearRect(0, 0, iframeCanvas.width, iframeCanvas.height);
     iframeCtx.fillStyle = 'blue';
-    iframeCtx.fillRect(Math.random() * iframeCanvas.width, Math.random() * iframeCanvas.height, 50, 50);
+    iframeCtx.fillRect(Math.random() * iframeCanvas.width, Math.random() * iframeCanvas.height, scale * 50, scale * 50);
     setTimeout(animateIframeCanvas, 1000);
   }
 
   animateIframeCanvas();
+
+  // Creating Shadow DOM for the fourth canvas
+  var shadowRootContainer = document.getElementById('shadow-root');
+  var shadowRoot = shadowRootContainer.attachShadow({mode: 'open'});
+
+  // Creating canvas inside the Shadow DOM
+  var shadowCanvas = document.createElement('canvas');
+  shadowCanvas.id = 'iframeShadowCanvas'
+  shadowRoot.appendChild(shadowCanvas);
+
+  shadowCanvas.width = shadowRootContainer.offsetWidth;
+  shadowCanvas.height = shadowRootContainer.offsetHeight;
+
+  // Animation loop for shadow canvas
+  function animateShadowCanvas() {
+    const shadowCtx = shadowCanvas.getContext('2d');
+    shadowCtx.clearRect(0, 0, shadowCanvas.width, shadowCanvas.height);
+    shadowCtx.fillStyle = 'pink';
+    shadowCtx.fillRect(Math.random() * shadowCanvas.width, Math.random() * shadowCanvas.height, 50, 50);
+    setTimeout(animateShadowCanvas, 1000);
+  }
+
+  animateShadowCanvas();
 </script>
 </body>
 </html>

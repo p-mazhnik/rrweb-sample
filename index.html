@@ -4,26 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sentry Canvas Replay</title>
-  <script
-          src="https://browser.sentry-cdn.com/7.102.0/bundle.es5.debug.min.js"
-          integrity="sha384-PXlS8yOqnhtn0aXluvf6yk12UUL517vcwpgHWpmEQVOEkh6OR2mFkkGHFDZYvM67"
-          crossorigin="anonymous"
-  ></script>
-  <script
-          src="https://browser.sentry-cdn.com/7.102.0/replay.debug.min.js"
-          integrity="sha384-N7rEHy8Sx9v44McsNQUwhk5dOQ0Pf2JDCVMhCyCwfM/mx7mJy9SSYu/p70l4+NMx"
-          crossorigin="anonymous"
-  ></script>
-  <script
-          src="https://browser.sentry-cdn.com/7.102.0/replay-canvas.debug.min.js"
-          integrity="sha384-DBvrIPEWLHXvnqwEwJjgPLrI8XztZZyPru4zhG2IBMaZFL1KPoLmBoO3XjuZN3Yq"
-          crossorigin="anonymous"
-  ></script>
+  <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/rrweb@latest/dist/rrweb.min.css"
+  />
+  <script src="./dist/rrweb.js"></script>
   <style>
     body, html {
       height: 100%;
       margin: 0;
-      overflow: hidden;
     }
     #container {
       display: flex;
@@ -32,6 +21,10 @@
     #left {
       width: 50%;
       height: 100%;
+    }
+    .left-canvas {
+      width: 100%;
+      height: 50%;
     }
     #right {
       width: 50%;
@@ -44,53 +37,70 @@
     }
     .textContainer {
       text-align: center;
-      margin-top: 20px;
+      padding-top: 10px;
     }
   </style>
 </head>
 <body>
 <script>
-  Sentry.onLoad(function() {
-    Sentry.init({
-      dsn: '',
-      integrations: [
-        Sentry.replayIntegration({
-          blockAllMedia: false,
-          maskAllText: false,
-        }),
-        Sentry.replayCanvasIntegration()
-      ],
-      // Session Replay
-      replaysSessionSampleRate: 1.0,
-      replaysOnErrorSampleRate: 1.0,
-    });
+  let events = [];
+
+  let stopFn = rrweb.record({
+    recordCanvas: true,
+    sampling: {
+      canvas: 15,
+    },
+    recordCrossOriginIframes: true,
+    getCanvasManager: (options) => new rrweb.CanvasManager(options),
+    emit(event) {
+      // store the event in any way you like
+      events.push(event)
+      console.log(event)
+      if (events.length > 100) {
+        // stop after 100 events
+        console.warn('stop')
+        stopFn();
+      }
+    },
   });
+  const replay = () => {
+    console.log('replay')
+    const replayer = new rrweb.Replayer(events, {
+      UNSAFE_replayCanvas: true
+    });
+    replayer.play();
+  }
 </script>
 <div id="container">
   <div id="left">
-    <div class="textContainer">
-      <p>This is text above the canvas</p>
+    <div class="left-canvas">
+      <div class="textContainer">
+        <button style="height: 22px" onclick="replay()">replay</button>
+        <p>This is text above the canvas</p>
+      </div>
+      <canvas id="mainCanvas"></canvas>
+      <div class="textContainer">
+        <p>This is text below the canvas and above the shadow dom</p>
+      </div>
     </div>
-    <canvas id="mainCanvas"></canvas>
-    <div class="textContainer">
-      <p>This is text below the canvas</p>
-    </div>
+    <div id="shadow-root" class="left-canvas canvas-container"></div>
   </div>
   <div id="right">
-    <iframe src="iframe_canvas.html" style="width: 100%; height: 100%; border: none;"></iframe>
+    <div class="textContainer" style="height: 18px"></div>
+    <iframe src="iframe_canvas.html" sandbox="allow-scripts allow-same-origin" style="width: 100%; height: 100%; border: none;"></iframe>
   </div>
 </div>
 
 <script>
   // Main Canvas
   var mainCanvas = document.getElementById('mainCanvas');
-  var mainCtx = mainCanvas.getContext('2d');
 
   mainCanvas.width = mainCanvas.offsetWidth;
   mainCanvas.height = mainCanvas.offsetHeight;
 
   // Animation loop for main canvas
   function animateMainCanvas() {
+    const mainCtx = mainCanvas.getContext('2d');
     mainCtx.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
     mainCtx.fillStyle = 'red';
     mainCtx.fillRect(Math.random() * mainCanvas.width, Math.random() * mainCanvas.height, 50, 50);
@@ -98,6 +108,29 @@
   }
 
   animateMainCanvas();
+
+  // Creating Shadow DOM for the third canvas
+  var shadowRootContainer = document.getElementById('shadow-root');
+  var shadowRoot = shadowRootContainer.attachShadow({mode: 'open'});
+
+  // Creating canvas inside the Shadow DOM
+  var shadowCanvas = shadowRoot.ownerDocument.createElement('canvas');
+  shadowCanvas.id = 'mainShadowCanvas'
+  shadowRoot.appendChild(shadowCanvas);
+
+  shadowCanvas.width = shadowRootContainer.offsetWidth;
+  shadowCanvas.height = shadowRootContainer.offsetHeight;
+
+  // Animation loop for shadow canvas
+  function animateShadowCanvas() {
+    const shadowCtx = shadowCanvas.getContext('2d');
+    shadowCtx.clearRect(0, 0, shadowCanvas.width, shadowCanvas.height);
+    shadowCtx.fillStyle = 'green';
+    shadowCtx.fillRect(Math.random() * shadowCanvas.width, Math.random() * shadowCanvas.height, 50, 50);
+    setTimeout(animateShadowCanvas, 1000);
+  }
+
+  animateShadowCanvas();
 </script>
 </body>
 </html>
