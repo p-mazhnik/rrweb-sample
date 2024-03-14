@@ -8,7 +8,8 @@
           rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/rrweb@latest/dist/rrweb.min.css"
   />
-  <script src="./dist/rrweb.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/rrweb@latest/dist/rrweb.js"></script>
+<!--  <script src="./dist/rrweb.js"></script>-->
   <style>
     body, html {
       height: 100%;
@@ -43,33 +44,47 @@
 </head>
 <body>
 <script>
-  let events = [];
+  window.name = "main!!!"
 
-  let stopFn = rrweb.record({
-    recordCanvas: true,
-    sampling: {
-      canvas: 15,
-    },
-    recordCrossOriginIframes: true,
-    getCanvasManager: (options) => new rrweb.CanvasManager(options),
-    emit(event) {
-      // store the event in any way you like
-      events.push(event)
-      console.log(event)
-      if (events.length > 100) {
-        // stop after 100 events
-        console.warn('stop')
-        stopFn();
-      }
-    },
-  });
+  let events = [];
+  let stopFn;
+  let canvasManager;
+
+  function reload() {
+    stopFn?.call();
+    events = [];
+    stopFn = rrweb.record({
+      recordCanvas: true,
+      sampling: {
+        canvas: 15,
+      },
+      recordCrossOriginIframes: true,
+      // getCanvasManager: (options) => {
+      //   canvasManager ??= new rrweb.CanvasManager(options)
+      //   return canvasManager
+      // },
+      emit(event) {
+        // store the event in any way you like
+        events.push(event)
+        console.log(event)
+        if (events.length > 100) {
+          // stop after 100 events
+          console.warn('stop')
+          stopFn();
+        }
+      },
+    });
+  }
+
   const replay = () => {
+    stopFn?.call();
     console.log('replay')
     const replayer = new rrweb.Replayer(events, {
       UNSAFE_replayCanvas: true
     });
     replayer.play();
   }
+  reload()
 </script>
 <div id="container">
   <div id="left">
